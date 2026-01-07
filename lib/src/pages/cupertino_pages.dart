@@ -4,6 +4,8 @@ import 'package:croppy/src/src.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+
+
 Future<CropImageResult?> showCupertinoImageCropper(
   BuildContext context, {
   required ImageProvider imageProvider,
@@ -49,9 +51,7 @@ var tempCrop=_initialData.cropShape.type == CropShapeType.ellipse
 
           heroTag: heroTag,
 
-          croppyStyleModel: CroppyStyleModel(
-            appbar: AppBar(),bottomNavigationBar: SizedBox()
-          ),
+          croppyStyleModel:croppyStyleModel,
           showLoadingIndicatorOnSubmit: showLoadingIndicatorOnSubmit,
           controller: controller,
           shouldPopAfterCrop: shouldPopAfterCrop,

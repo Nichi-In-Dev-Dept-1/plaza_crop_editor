@@ -10,8 +10,10 @@ class CroppyStyleModel {
   final Widget? resetIcon;
   final TextStyle? titleTextStyle;
   final String? titleText;
-  final Widget? bottomNavigationBar;
-  final PreferredSizeWidget? appbar;
+  final Widget? Function(CroppableImageController, DefaultCupertinoCroppableImageControllerState)?
+      bottomNavigationBar;
+  final PreferredSizeWidget? Function(
+      CroppableImageController, DefaultCupertinoCroppableImageControllerState)? appbar;
 
   CroppyStyleModel({
     this.backIcon,

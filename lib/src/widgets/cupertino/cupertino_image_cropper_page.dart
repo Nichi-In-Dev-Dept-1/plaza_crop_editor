@@ -7,8 +7,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-
-
 class CupertinoImageCropperPage extends StatelessWidget {
   CupertinoImageCropperPage({
     super.key,
@@ -41,16 +39,19 @@ class CupertinoImageCropperPage extends StatelessWidget {
     final theme = themeData ?? generateCupertinoImageCropperTheme(context);
 
     return Theme(
-      data: Theme.of(context).copyWith(
-        scaffoldBackgroundColor:_croppyStyleModel.backGroundColor??  Colors.black
-      ),
+      data: Theme.of(context)
+          .copyWith(scaffoldBackgroundColor: _croppyStyleModel.backGroundColor ?? Colors.black),
       child: Scaffold(
-        backgroundColor:_croppyStyleModel.backGroundColor??  Colors.black,
-        appBar: _croppyStyleModel.appbar,
-
+        backgroundColor: _croppyStyleModel.backGroundColor ?? Colors.black,
+        appBar: _croppyStyleModel.appbar == null
+            ? null
+            : _croppyStyleModel.appbar!(controller, checkKey),
+        bottomNavigationBar: _croppyStyleModel.bottomNavigationBar == null
+            ? null
+            : _croppyStyleModel.bottomNavigationBar!(controller, checkKey),
         body: AnnotatedRegion<SystemUiOverlayStyle>(
-          value:  SystemUiOverlayStyle(
-            systemNavigationBarColor: _croppyStyleModel.backGroundColor??  Colors.black,
+          value: SystemUiOverlayStyle(
+            systemNavigationBarColor: _croppyStyleModel.backGroundColor ?? Colors.black,
             statusBarBrightness: Brightness.dark,
             statusBarColor: Colors.transparent,
             statusBarIconBrightness: Brightness.dark,
@@ -123,68 +124,68 @@ class CupertinoImageCropperPage extends StatelessWidget {
     );
   }
 
-  // Widget _bottomNavigationBar(BuildContext context) {
-  //   return Container(
-  //     color: _croppyStyleModel.backGroundColor,
-  //     child: Row(
-  //       spacing: 12,
-  //       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-  //       children: [
-  //         IconWithName(
-  //           onPressed: () async {
-  //             // final CroppableImageData initialData = await CroppableImageData.fromImageProvider(
-  //             //   controller.res,
-  //             //   cropPathFn: ellipseCropShapeFn,
-  //             // );
-  //             // controller.CahnageShaoe(initialData);
-  //
-  //             // checkKey.currentState!.changeShape();
-  //             // controller.cropShapeFn=CropShape();
-  //             // controller.onBaseTransformation(
-  //             //     initialData.copyWithProperCropShape(cropShapeFn: ellipseCropShapeFn));
-  //             showCropOptions(context);
-  //           },
-  //           title: "Cropper",
-  //           child: const Icon(
-  //             Icons.crop,
-  //             color: Colors.black,
-  //           ),
-  //         ),
-  //         IconWithName(
-  //             onPressed: controller.onRotateCCW,
-  //             title: "Rotate",
-  //             child: const Icon(Icons.rotate_90_degrees_ccw, color: Colors.black)),
-  //         IconWithName(
-  //             onPressed: controller.onMirrorHorizontal,
-  //             title: "Flip",
-  //             child: const Icon(Icons.flip, color: Colors.black)),
-  //         IconWithName(
-  //             onPressed: controller.onMirrorVertical,
-  //             title: "Flip",
-  //             child: Transform.rotate(
-  //               angle: pi / 2,
-  //               child: const Icon(Icons.flip, color: Colors.black),
-  //             )),
-  //       ],
-  //     ),
-  //   );
-  // }
+// Widget _bottomNavigationBar(BuildContext context) {
+//   return Container(
+//     color: _croppyStyleModel.backGroundColor,
+//     child: Row(
+//       spacing: 12,
+//       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//       children: [
+//         IconWithName(
+//           onPressed: () async {
+//             // final CroppableImageData initialData = await CroppableImageData.fromImageProvider(
+//             //   controller.res,
+//             //   cropPathFn: ellipseCropShapeFn,
+//             // );
+//             // controller.CahnageShaoe(initialData);
+//
+//             // checkKey.currentState!.changeShape();
+//             // controller.cropShapeFn=CropShape();
+//             // controller.onBaseTransformation(
+//             //     initialData.copyWithProperCropShape(cropShapeFn: ellipseCropShapeFn));
+//             showCropOptions(context);
+//           },
+//           title: "Cropper",
+//           child: const Icon(
+//             Icons.crop,
+//             color: Colors.black,
+//           ),
+//         ),
+//         IconWithName(
+//             onPressed: controller.onRotateCCW,
+//             title: "Rotate",
+//             child: const Icon(Icons.rotate_90_degrees_ccw, color: Colors.black)),
+//         IconWithName(
+//             onPressed: controller.onMirrorHorizontal,
+//             title: "Flip",
+//             child: const Icon(Icons.flip, color: Colors.black)),
+//         IconWithName(
+//             onPressed: controller.onMirrorVertical,
+//             title: "Flip",
+//             child: Transform.rotate(
+//               angle: pi / 2,
+//               child: const Icon(Icons.flip, color: Colors.black),
+//             )),
+//       ],
+//     ),
+//   );
+// }
 
-  // Future<void> showCropOptions(BuildContext context) async {
-  //   await showModalBottomSheet<Object?>(
-  //     context: context,
-  //     clipBehavior: Clip.antiAlias,
-  //     backgroundColor: _croppyStyleModel.backGroundColor,
-  //     builder: (_) {
-  //       return AspectRatioSelectionBottomSheet(
-  //         controller: controller as AspectRatioMixin,
-  //         onCircleTap: (val, isElipse) {
-  //           checkKey.changeAspectRatio(ratio: val, shapeType: isElipse);
-  //         },
-  //       );
-  //     },
-  //   );
-  // }
+// Future<void> showCropOptions(BuildContext context) async {
+//   await showModalBottomSheet<Object?>(
+//     context: context,
+//     clipBehavior: Clip.antiAlias,
+//     backgroundColor: _croppyStyleModel.backGroundColor,
+//     builder: (_) {
+//       return AspectRatioSelectionBottomSheet(
+//         controller: controller as AspectRatioMixin,
+//         onCircleTap: (val, isElipse) {
+//           checkKey.changeAspectRatio(ratio: val, shapeType: isElipse);
+//         },
+//       );
+//     },
+//   );
+// }
 }
 
 class IconWithName extends StatelessWidget {
