@@ -128,7 +128,8 @@ class DefaultCupertinoCroppableImageControllerState
 
     _wasTransforming = isTransforming;
   }
-
+  bool get canUndo => _undoStack.length > 1;
+  bool get canRedo => _redoStack.isNotEmpty;
   void _pushUndoNode(CupertinoCroppableImageController? controller, {CroppableImageData? data}) {
     if (_controller == null) return;
     //
