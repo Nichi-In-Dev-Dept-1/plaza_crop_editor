@@ -96,12 +96,12 @@ class DefaultCupertinoCroppableImageControllerState
       allowedAspectRatios: widget.allowedAspectRatios,
       enabledTransformations: widget.enabledTransformations ?? Transformation.values,
     );
-    if (widget.fixedAspect != null && !fromCrop) {
-      var temp = aspectFromDouble(widget.fixedAspect!);
-      log("aaaaaaaaaaa ${temp}");
-      _controller!.currentAspectRatio = aspectFromDouble(widget.fixedAspect!);
-      applyInitialCrop(fixedAspect: widget.fixedAspect!, widthFactor: 1);
-    }
+    // if (widget.fixedAspect != null && !fromCrop) {
+    //   var temp = aspectFromDouble(widget.fixedAspect!);
+    //   log("aaaaaaaaaaa ${temp}");
+    //   _controller!.currentAspectRatio = aspectFromDouble(widget.fixedAspect!);
+    //   applyInitialCrop(fixedAspect: widget.fixedAspect!, widthFactor: 1);
+    // }
 
     _pushUndoNode(_controller, data: initialData);
     initialiseListener(_controller!);
