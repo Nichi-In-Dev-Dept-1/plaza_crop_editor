@@ -42,7 +42,9 @@ class DefaultCupertinoCroppableImageControllerState
   @override
   void initState() {
     super.initState();
-    prepareController(type: widget.initialData?.cropShape.type);
+    prepareController(type: widget.initialData?.cropShape.type).then((val){
+      _resetData=val!.data;
+    });
   }
 
   Future<CupertinoCroppableImageController?> prepareController(
@@ -57,7 +59,7 @@ class DefaultCupertinoCroppableImageControllerState
         widget.imageProvider,
         cropPathFn: tempCrop,
       );
-      _resetData=initialData;
+
     }
     // 🔥 STEP 4: RECREATE CONTROLLER
 
