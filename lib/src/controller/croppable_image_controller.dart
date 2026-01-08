@@ -206,6 +206,10 @@ abstract class BaseCroppableImageController extends ChangeNotifier {
     data = _resetData;
     notifyListeners();
   }
+  void resetProcess(CroppableImageData data) {
+    data = data;
+    notifyListeners();
+  }
   /// Resets the controller to its initial state.
   void CahnageShaoe(CroppableImageData newData) {
     data = newData;
