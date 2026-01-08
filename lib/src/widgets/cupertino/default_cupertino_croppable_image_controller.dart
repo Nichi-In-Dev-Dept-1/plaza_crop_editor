@@ -173,7 +173,32 @@ class DefaultCupertinoCroppableImageControllerState
       (_controller as AspectRatioMixin).currentAspectRatio = ratio;
     }
   }
+  void changeAspectRatioCentered(CropAspectRatio? ratio) {
+    if (_controller?.currentAspectRatio == ratio) return;
 
+    final oldRect = _controller!.data.cropRect;
+    final imageSize = _controller!.data.imageSize;
+
+    // 1️⃣ Apply aspect ratio
+    _controller?.currentAspectRatio = ratio;
+
+    // 2️⃣ Recenter crop rect
+    final centeredRect = Rect.fromCenter(
+      center: imageSize.center(Offset.zero),
+      width: _controller!.data.cropRect.width,
+      height: _controller!.data.cropRect.height,
+    );
+
+    _controller!.onBaseTransformation(
+      _controller!.data.copyWith(
+        cropRect: centeredRect,
+        currentImageTransform: Matrix4.identity(),
+      ),
+    );
+
+    // 3️⃣ Normalize to be safe
+    _controller!.normalize();
+  }
   resetListener() {
     _controller?.dispose();
     _controller = null;
