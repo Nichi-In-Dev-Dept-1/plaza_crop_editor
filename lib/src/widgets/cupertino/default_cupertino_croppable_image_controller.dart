@@ -190,6 +190,11 @@ class DefaultCupertinoCroppableImageControllerState
 
   resetData(CroppableImageData data) {
     _controller!.resetProcess(data);
+    _redoStack.clear();
+    var temp = _undoStack.removeAt(0);
+    _undoStack.clear();
+    _undoStack.add(temp);
+    _updateUndoRedoNotifier();
   }
 
   void redo() {
