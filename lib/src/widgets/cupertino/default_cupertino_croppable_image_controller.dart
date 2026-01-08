@@ -188,6 +188,10 @@ class DefaultCupertinoCroppableImageControllerState
     setState(() {});
   }
 
+  resetData(CroppableImageData data) {
+    _controller!.resetProcess(data);
+  }
+
   void redo() {
     if (_redoStack.isEmpty) return;
 
