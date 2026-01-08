@@ -36,13 +36,13 @@ class CupertinoImageCropperPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = themeData ?? generateCupertinoImageCropperTheme(context);
+
 
     return Theme(
       data: Theme.of(context)
-          .copyWith(scaffoldBackgroundColor: _croppyStyleModel.backGroundColor ?? Colors.black),
+          .copyWith(scaffoldBackgroundColor: _croppyStyleModel.backGroundColor),
       child: Scaffold(
-        backgroundColor: _croppyStyleModel.backGroundColor ?? Colors.black,
+        backgroundColor: _croppyStyleModel.backGroundColor,
         appBar: _croppyStyleModel.appbar == null
             ? null
             : _croppyStyleModel.appbar!(controller, checkKey),
@@ -51,9 +51,9 @@ class CupertinoImageCropperPage extends StatelessWidget {
             : _croppyStyleModel.bottomNavigationBar!(controller, checkKey),
         body: AnnotatedRegion<SystemUiOverlayStyle>(
           value: SystemUiOverlayStyle(
-            systemNavigationBarColor: _croppyStyleModel.backGroundColor ?? Colors.black,
+            systemNavigationBarColor: _croppyStyleModel.backGroundColor ,
             statusBarBrightness: Brightness.dark,
-            statusBarColor: Colors.transparent,
+            statusBarColor: _croppyStyleModel.backGroundColor,
             statusBarIconBrightness: Brightness.dark,
             systemNavigationBarIconBrightness: Brightness.dark,
           ),
@@ -62,7 +62,7 @@ class CupertinoImageCropperPage extends StatelessWidget {
             heroTag: heroTag,
             builder: (context, overlayOpacityAnimation) {
               return CupertinoPageScaffold(
-                backgroundColor: theme.scaffoldBackgroundColor,
+                backgroundColor: _croppyStyleModel.backGroundColor,
                 navigationBar: _croppyStyleModel.appbar == null
                     ? CupertinoImageCropperAppBar(
                         controller: controller,
