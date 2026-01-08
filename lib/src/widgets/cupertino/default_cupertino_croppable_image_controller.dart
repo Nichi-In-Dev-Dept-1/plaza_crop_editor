@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:math' as math;
 
 import 'package:croppy/src/src.dart';
 import 'package:flutter/material.dart';
@@ -93,28 +94,6 @@ class DefaultCupertinoCroppableImageControllerState
     return Offset(cx, cy);
   }
 
-  void centerCropRect(CupertinoCroppableImageController controller) {
-    final rect = controller.data.cropRect;
-    final quad = controller.data.transformedImageQuad; // Quad2
-
-    final center = quad2Center(quad);
-
-    final centeredRect = Rect.fromCenter(
-      center: center,
-      width: rect.width,
-      height: rect.height,
-    );
-
-    controller.onBaseTransformation(
-      controller.data.copyWith(
-        cropRect: centeredRect,
-        currentImageTransform: Matrix4.identity(),
-      ),
-    );
-
-    controller.normalize();
-  }
-
   Future<CupertinoCroppableImageController?> prepareController(
       {CropShapeType? type, bool fromCrop = false, CroppableImageData? initialDatas}) async {
     late final CroppableImageData initialData;
@@ -137,7 +116,7 @@ class DefaultCupertinoCroppableImageControllerState
       data: initialData,
       postProcessFn: widget.postProcessFn,
       cropShapeFn: tempCrop,
-      allowedAspectRatios: widget.allowedAspectRatios,
+      // allowedAspectRatios: widget.allowedAspectRatios,
       enabledTransformations: widget.enabledTransformations ?? Transformation.values,
     );
     if (widget.fixedAspect != null && !fromCrop) {
@@ -145,9 +124,13 @@ class DefaultCupertinoCroppableImageControllerState
         widget.fixedAspect!,
         widget.allowedAspectRatios ?? [],
       );
-      _controller!.currentAspectRatio = snapped;
+      log("--------${snapped}");
+      Future.delayed(const Duration(milliseconds: 100)).then((_) {
+        // applyAspectRatioCentered(snapped);
+        _controller!.currentAspectRatio = snapped;
+      });
     }
-    centerCropRect(_controller!);
+
     _pushUndoNode(_controller, data: initialData);
     initialiseListener(_controller!);
 
@@ -155,26 +138,6 @@ class DefaultCupertinoCroppableImageControllerState
       setState(() {});
     }
     return _controller;
-  }
-
-  void applyInitialCrop({
-    required double fixedAspect,
-    required double widthFactor,
-  }) {
-    final imageSize = _controller!.data.imageSize;
-
-    final cropWidth = imageSize.width * widthFactor;
-    final cropHeight = cropWidth / fixedAspect;
-
-    final rect = Rect.fromCenter(
-      center: imageSize.center(Offset.zero),
-      width: cropWidth,
-      height: cropHeight,
-    );
-
-    _controller?.onBaseTransformation(
-      _controller!.data.copyWith(cropRect: rect),
-    );
   }
 
   changeAspectRatio({CropAspectRatio? ratio, CropShapeType? shapeType}) {
@@ -185,38 +148,27 @@ class DefaultCupertinoCroppableImageControllerState
     } else if (_controller!.cropShapeFn == circleCropShapeFn && (!isElipse)) {
       print("----  Current shape changed to circle to square ");
       prepareController(type: CropShapeType.aabb, fromCrop: true).then((localController) {
-        (localController as AspectRatioMixin).currentAspectRatio = ratio;
+        if (ratio == null) {
+          applyFreeCrop(ratio);
+          return;
+        }
+        (_controller as AspectRatioMixin).currentAspectRatio =
+            ratio ?? _controller?.allowedAspectRatios.first;
       });
     } else {
+      if (ratio == null) {
+        applyFreeCrop(ratio);
+        return;
+      }
       (_controller as AspectRatioMixin).currentAspectRatio = ratio;
     }
   }
 
-  void changeAspectRatioCentered(CropAspectRatio? ratio) {
-    if (_controller?.currentAspectRatio == ratio) return;
-
-    final oldRect = _controller!.data.cropRect;
-    final imageSize = _controller!.data.imageSize;
-
-    // 1️⃣ Apply aspect ratio
-    _controller?.currentAspectRatio = ratio;
-
-    // 2️⃣ Recenter crop rect
-    final centeredRect = Rect.fromCenter(
-      center: imageSize.center(Offset.zero),
-      width: _controller!.data.cropRect.width,
-      height: _controller!.data.cropRect.height,
-    );
-
-    _controller!.onBaseTransformation(
-      _controller!.data.copyWith(
-        cropRect: centeredRect,
-        currentImageTransform: Matrix4.identity(),
-      ),
-    );
-
-    // 3️⃣ Normalize to be safe
-    _controller!.normalize();
+  applyFreeCrop(CropAspectRatio? ratio) {
+    (_controller as AspectRatioMixin).currentAspectRatio = _controller?.allowedAspectRatios.first;
+    Future.delayed(const Duration(milliseconds: 200)).then((_) {
+      (_controller as AspectRatioMixin).currentAspectRatio = ratio;
+    });
   }
 
   resetListener() {
@@ -307,35 +259,13 @@ class DefaultCupertinoCroppableImageControllerState
           ? circleCropShapeFn
           : aabbCropShapeFn,
       postProcessFn: widget.postProcessFn,
-      allowedAspectRatios: widget.allowedAspectRatios,
+      // allowedAspectRatios: widget.allowedAspectRatios,
       enabledTransformations: widget.enabledTransformations ?? Transformation.values,
     );
     _restoreFromUndoNode(previous);
     initialiseListener(_controller!);
     _updateUndoRedoNotifier();
     setState(() {});
-  }
-
-  void hardReset() {
-    _undoStack.clear();
-    _redoStack.clear();
-
-    _controller?.onBaseTransformation(
-      _resetData.copyWith(),
-    );
-
-    _updateUndoRedoNotifier();
-  }
-
-  resetData() {
-    _controller?.onBaseTransformation(_resetData.copyWith());
-
-    // _controller!.resetProcess(_resetData);
-    // _redoStack.clear();
-    // var temp = _undoStack.removeAt(0);
-    // _undoStack.clear();
-    // _undoStack.add(temp);
-    // _updateUndoRedoNotifier();
   }
 
   resetDateWithInitializecontroller() {
@@ -359,7 +289,7 @@ class DefaultCupertinoCroppableImageControllerState
       data: next.data.copyWith(),
       cropShapeFn:
           next.data.cropShape.type == CropShapeType.ellipse ? circleCropShapeFn : aabbCropShapeFn,
-      allowedAspectRatios: widget.allowedAspectRatios,
+      // allowedAspectRatios: widget.allowedAspectRatios,
       enabledTransformations: widget.enabledTransformations ?? Transformation.values,
     );
     _restoreFromUndoNode(next);

@@ -44,7 +44,7 @@ class CupertinoImageAspectRatioToolbar extends StatelessWidget {
 
   List<Widget> _buildAspectRatioChips(BuildContext context) {
     final aspectRatios = controller.allowedAspectRatios;
-
+    log("-----${aspectRatios}");
     final displayedAspectRatios = <CropAspectRatio?>[];
 
     for (final aspectRatio in aspectRatios) {
