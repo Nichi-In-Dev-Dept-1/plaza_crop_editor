@@ -44,7 +44,7 @@ class DefaultCupertinoCroppableImageControllerState
     super.initState();
     prepareController(type: widget.initialData?.cropShape.type).then((val) {
       WidgetsBinding.instance.addPostFrameCallback((_){
-        _resetData = val!.data;
+        _resetData = val!.data.copyWith();
         setState(() {});
       });
     });
