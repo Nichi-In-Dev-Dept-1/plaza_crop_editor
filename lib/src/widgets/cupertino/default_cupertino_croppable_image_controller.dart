@@ -68,11 +68,11 @@ class DefaultCupertinoCroppableImageControllerState
   }
 
   void _restoreFromUndoNode(CropUndoNode node) {
-    // _controller?.onBaseTransformation(
-    //   node.data.copyWith(
-    //     currentImageTransform: Matrix4.identity(),
-    //   ),
-    // );
+    _controller?.onBaseTransformation(
+      node.data.copyWith(
+        currentImageTransform: Matrix4.identity(),
+      ),
+    );
   }
 
   CropAspectRatio? snapFromAllowedAspectRatios(
