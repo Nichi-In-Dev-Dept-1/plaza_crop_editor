@@ -96,7 +96,7 @@ class DefaultCupertinoCroppableImageControllerState
 
   Future<CupertinoCroppableImageController?> prepareController(
       {CropShapeType? type, bool fromCrop = false, CroppableImageData? initialDatas}) async {
-    late final CroppableImageData initialData;
+    late CroppableImageData initialData;
     var tempCrop =
         (type == CropShapeType.aabb || type == null) ? aabbCropShapeFn : circleCropShapeFn;
     if (initialDatas != null && !fromCrop) {
@@ -106,6 +106,15 @@ class DefaultCupertinoCroppableImageControllerState
         widget.imageProvider,
         cropPathFn: tempCrop,
       );
+      if (widget.initialData != null) {
+        // initialData=  initialData.copyWith(
+        //     cropRect: widget.initialData!.cropRect,
+        //    imageSize: widget.initialData!.imageSize,
+        //     baseTransformations: widget.initialData!.baseTransformations,
+        //     currentImageTransform: widget.initialData!.currentImageTransform,
+        //     imageTransform: widget.initialData!.imageTransform
+        //   );
+      }
     }
     // 🔥 STEP 4: RECREATE CONTROLLER
 
@@ -145,6 +154,9 @@ class DefaultCupertinoCroppableImageControllerState
     if (_controller!.cropShapeFn != circleCropShapeFn && (isElipse)) {
       print("----  Current shape changed to Square to Circle ");
       prepareController(type: CropShapeType.ellipse, fromCrop: true);
+      Future.delayed(Duration(milliseconds: 100)).then((_) {
+        (_controller as AspectRatioMixin).currentAspectRatio = CropAspectRatio(width: 1, height: 1);
+      });
     } else if (_controller!.cropShapeFn == circleCropShapeFn && (!isElipse)) {
       print("----  Current shape changed to circle to square ");
       prepareController(type: CropShapeType.aabb, fromCrop: true).then((localController) {
@@ -165,6 +177,7 @@ class DefaultCupertinoCroppableImageControllerState
   }
 
   applyFreeCrop(CropAspectRatio? ratio) {
+
     (_controller as AspectRatioMixin).currentAspectRatio = _controller?.allowedAspectRatios.first;
     Future.delayed(const Duration(milliseconds: 200)).then((_) {
       (_controller as AspectRatioMixin).currentAspectRatio = ratio;
@@ -262,6 +275,7 @@ class DefaultCupertinoCroppableImageControllerState
       // allowedAspectRatios: widget.allowedAspectRatios,
       enabledTransformations: widget.enabledTransformations ?? Transformation.values,
     );
+
     _restoreFromUndoNode(previous);
     initialiseListener(_controller!);
     _updateUndoRedoNotifier();
