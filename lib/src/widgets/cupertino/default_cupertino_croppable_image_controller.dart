@@ -20,6 +20,7 @@ class DefaultCupertinoCroppableImageController extends StatefulWidget {
   final ImageProvider imageProvider;
   final CroppableImageData? initialData;
   final double? fixedAspect;
+
   final CroppableImagePostProcessFn? postProcessFn;
   final CropShapeFn? cropShapeFn;
   final List<CropAspectRatio?>? allowedAspectRatios;
@@ -51,6 +52,16 @@ class DefaultCupertinoCroppableImageControllerState
         .then((val) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _resetData = val!.data.copyWith();
+        if (widget.fixedAspect != null) {
+          Future.delayed(const Duration(milliseconds: 500)).then((_) {
+            // applyAspectRatioCentered(snapped);
+            final snapped = snapFromAllowedAspectRatios(
+              widget.fixedAspect!,
+              widget.allowedAspectRatios ?? [],
+            );
+            changeAspectRatio(ratio: snapped);
+          });
+        }
         setState(() {});
       });
     });
@@ -95,34 +106,38 @@ class DefaultCupertinoCroppableImageControllerState
   }
 
   Future<CupertinoCroppableImageController?> prepareController(
-      {CropShapeType? type, bool fromCrop = false, CroppableImageData? initialDatas}) async {
+      {CropShapeType? type,
+      bool fromCrop = false,
+      CroppableImageData? initialDatas,
+      bool isFreeCrop = false}) async {
     late CroppableImageData initialData;
     var tempCrop =
         (type == CropShapeType.aabb || type == null) ? aabbCropShapeFn : circleCropShapeFn;
     if (initialDatas != null && !fromCrop) {
+      log("aaaa using old data ${initialDatas}");
       initialData = initialDatas!;
     } else {
+      log("aaaa using new  data");
       initialData = await CroppableImageData.fromImageProvider(
         widget.imageProvider,
         cropPathFn: tempCrop,
       );
-      if (widget.initialData != null) {
-        // initialData=  initialData.copyWith(
-        //     cropRect: widget.initialData!.cropRect,
-        //    imageSize: widget.initialData!.imageSize,
-        //     baseTransformations: widget.initialData!.baseTransformations,
-        //     currentImageTransform: widget.initialData!.currentImageTransform,
-        //     imageTransform: widget.initialData!.imageTransform
-        //   );
-      }
+      if (widget.initialData != null) {}
     }
     // 🔥 STEP 4: RECREATE CONTROLLER
+    // 1️⃣ Preserve all transforms, only update shape
 
+    final preservedData = isFreeCrop
+        ? initialData
+        : _controller?.data.copyWithProperCropShape(
+              cropShapeFn: tempCrop,
+            ) ??
+            initialData;
     resetListener();
     _controller = CupertinoCroppableImageController(
       vsync: this,
       imageProvider: widget.imageProvider,
-      data: initialData,
+      data: preservedData,
       postProcessFn: widget.postProcessFn,
       cropShapeFn: tempCrop,
       // allowedAspectRatios: widget.allowedAspectRatios,
@@ -133,12 +148,6 @@ class DefaultCupertinoCroppableImageControllerState
         widget.fixedAspect!,
         widget.allowedAspectRatios ?? [],
       );
-
-      Future.delayed(const Duration(milliseconds: 100)).then((_) {
-        // applyAspectRatioCentered(snapped);
-
-        (_controller as AspectRatioMixin).currentAspectRatio = snapped;
-      });
     }
 
     _pushUndoNode(_controller, data: initialData);
@@ -153,14 +162,13 @@ class DefaultCupertinoCroppableImageControllerState
   changeAspectRatio({CropAspectRatio? ratio, CropShapeType? shapeType}) {
     bool isElipse = shapeType == CropShapeType.ellipse;
     if (_controller!.cropShapeFn != circleCropShapeFn && (isElipse)) {
-      print("----  Current shape changed to Square to Circle ");
       prepareController(type: CropShapeType.ellipse, fromCrop: true);
       Future.delayed(Duration(milliseconds: 100)).then((_) {
         (_controller as AspectRatioMixin).currentAspectRatio = CropAspectRatio(width: 1, height: 1);
       });
     } else if (_controller!.cropShapeFn == circleCropShapeFn && (!isElipse)) {
-      print("----  Current shape changed to circle to square ");
-      prepareController(type: CropShapeType.aabb, fromCrop: true).then((localController) {
+      prepareController(type: CropShapeType.aabb, fromCrop: true, isFreeCrop: ratio == null)
+          .then((localController) {
         if (ratio == null) {
           applyFreeCrop(ratio);
           return;
@@ -328,7 +336,7 @@ class DefaultCupertinoCroppableImageControllerState
     if (_controller == null) {
       return const SizedBox.shrink();
     }
-
+    log("aaaaaaaaaa--${_controller?.currentAspectRatio}");
     return widget.builder(context, _controller!, this);
   }
 }
