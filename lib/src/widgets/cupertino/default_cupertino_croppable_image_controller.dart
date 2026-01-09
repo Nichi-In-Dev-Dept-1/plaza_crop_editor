@@ -292,7 +292,10 @@ class DefaultCupertinoCroppableImageControllerState
 
   resetDateWithInitializecontroller() {
     prepareController(
-        type: _resetData?.cropShape.type, initialDatas: _resetData.copyWith(), isFreeCrop: true);
+        type: _resetData?.cropShape.type,
+        initialDatas: _resetData.copyWith(),
+        isFreeCrop: true,
+        fromCrop: true);
   }
 
   void redo() {
