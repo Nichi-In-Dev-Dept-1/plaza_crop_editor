@@ -69,9 +69,7 @@ class DefaultCupertinoCroppableImageControllerState
 
   void _restoreFromUndoNode(CropUndoNode node) {
     _controller?.onBaseTransformation(
-      node.data.copyWith(
-        currentImageTransform: Matrix4.identity(),
-      ),
+      node.data.copyWith(),
     );
   }
 
@@ -143,14 +141,10 @@ class DefaultCupertinoCroppableImageControllerState
       // allowedAspectRatios: widget.allowedAspectRatios,
       enabledTransformations: widget.enabledTransformations ?? Transformation.values,
     );
-    if (widget.fixedAspect != null && !fromCrop) {
-      final snapped = snapFromAllowedAspectRatios(
-        widget.fixedAspect!,
-        widget.allowedAspectRatios ?? [],
-      );
-    }
 
-    _pushUndoNode(_controller, data: initialData);
+    if (fromCrop == false) {
+      _pushUndoNode(_controller, data: initialData);
+    }
     initialiseListener(_controller!);
 
     if (mounted) {
@@ -163,7 +157,8 @@ class DefaultCupertinoCroppableImageControllerState
     bool isElipse = shapeType == CropShapeType.ellipse;
     if (_controller!.cropShapeFn != circleCropShapeFn && (isElipse)) {
       prepareController(type: CropShapeType.ellipse, fromCrop: true);
-      Future.delayed(Duration(milliseconds: 100)).then((_) {
+
+      Future.delayed(const Duration(milliseconds: 100)).then((_) {
         (_controller as AspectRatioMixin).currentAspectRatio = CropAspectRatio(width: 1, height: 1);
       });
     } else if (_controller!.cropShapeFn == circleCropShapeFn && (!isElipse)) {
@@ -186,9 +181,9 @@ class DefaultCupertinoCroppableImageControllerState
   }
 
   applyFreeCrop(CropAspectRatio? ratio) {
-    (_controller as AspectRatioMixin).currentAspectRatio = _controller?.allowedAspectRatios.first;
+    // (_controller as AspectRatioMixin).currentAspectRatio = _controller?.allowedAspectRatios.first;
     Future.delayed(const Duration(milliseconds: 200)).then((_) {
-      (_controller as AspectRatioMixin).currentAspectRatio = ratio;
+      (_controller as AspectRatioMixin).currentAspectRatio = _controller?.allowedAspectRatios.first;
     });
   }
 
@@ -257,6 +252,7 @@ class DefaultCupertinoCroppableImageControllerState
     );
 
     _redoStack.clear();
+    log("uuuuuuuu  ${_undoStack.length}");
     _updateUndoRedoNotifier();
   }
 
