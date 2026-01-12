@@ -215,7 +215,7 @@ class CupertinoImageCropperPage extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text("Rotate", style: textStyle16()),
+                    Text("Rotate", style: textStyleCroppy16()),
                     const SizedBox(height: 16),
 
                     // Slider for custom angle rotation
@@ -389,7 +389,7 @@ class CupertinoImageCropperPage extends StatelessWidget {
   }
 }
 
-TextStyle? textStyle16() {
+TextStyle? textStyleCroppy16() {
   return TextStyle(fontSize: 12, color: Colors.black12, fontWeight: FontWeight.w400);
 }
 
