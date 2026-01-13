@@ -176,7 +176,6 @@ class DefaultCupertinoCroppableImageControllerState
     _controller = null;
   }
 
-
   void applyRotationFromUI(
     CupertinoCroppableImageController controller,
     double degrees, // -90 to +90
@@ -197,6 +196,10 @@ class DefaultCupertinoCroppableImageControllerState
     controller.aspectRatioNotifier.addListener(_onAspectRatioChanged);
 
     controller.dataChangedNotifier.addListener(() {
+      _pushUndoNode(controller);
+    });
+    controller.mirrorDataChangedNotifier.addListener(() {
+      print("Mirror Changed");
       _pushUndoNode(controller);
     });
   }
@@ -348,7 +351,7 @@ class DefaultCupertinoCroppableImageControllerState
           );
           changeAspectRatio(ratio: snapped);
           Future.delayed(const Duration(milliseconds: 200)).then((_) {
-            // _undoStack.removeLast();
+            _undoStack.removeLast();
             _makeItCenter();
           });
         });
