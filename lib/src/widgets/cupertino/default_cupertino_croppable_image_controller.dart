@@ -1,6 +1,5 @@
 import 'dart:developer';
 import 'dart:math' as math;
-import 'dart:math';
 
 import 'package:croppy/src/src.dart';
 import 'package:flutter/material.dart';
@@ -40,7 +39,7 @@ class DefaultCupertinoCroppableImageControllerState
   CupertinoCroppableImageController? _controller;
   final List<CropUndoNode> _undoStack = [];
   final List<CropUndoNode> _redoStack = [];
-  late final CroppableImageData _resetData;
+
   bool _wasTransforming = false;
   final ValueNotifier<UndoRedoState> undoRedoNotifier =
       ValueNotifier(const UndoRedoState(canUndo: false, canRedo: false));
@@ -94,13 +93,15 @@ class DefaultCupertinoCroppableImageControllerState
   Future<CupertinoCroppableImageController?> prepareController(
       {CropShapeType? type,
       bool fromCrop = false,
+      bool isReset = false,
+      bool isUndoReset = false,
       CroppableImageData? initialDatas,
       bool isFreeCrop = false}) async {
     late CroppableImageData initialData;
     var tempCrop =
         (type == CropShapeType.aabb || type == null) ? aabbCropShapeFn : circleCropShapeFn;
     if (initialDatas != null && !fromCrop) {
-      initialData = initialDatas!;
+      initialData = initialDatas!.copyWith();
     } else {
       initialData = await CroppableImageData.fromImageProvider(
         widget.imageProvider,
@@ -109,13 +110,17 @@ class DefaultCupertinoCroppableImageControllerState
       if (widget.initialData != null) {}
     }
 
-    final preservedData = isFreeCrop
+    final preservedData = isReset
         ? initialData
-        : _controller?.data.copyWithProperCropShape(
-              cropShapeFn: tempCrop,
-            ) ??
-            initialData;
-    resetListener();
+        : isFreeCrop
+            ? initialData
+            : _controller?.data.copyWithProperCropShape(
+                  cropShapeFn: tempCrop,
+                ) ??
+                initialData;
+    if (!isUndoReset) {
+      resetListener();
+    }
     _controller = CupertinoCroppableImageController(
       vsync: this,
       imageProvider: widget.imageProvider,
@@ -191,23 +196,32 @@ class DefaultCupertinoCroppableImageControllerState
 
     controller.addListener(_onControllerChanged);
     controller.baseNotifier.addListener(() {
+      log("----Base Notifier");
       _pushUndoNode(_controller, data: controller.baseNotifier.value);
     });
     controller.aspectRatioNotifier.addListener(_onAspectRatioChanged);
 
     controller.dataChangedNotifier.addListener(() {
+      log("----data change Notifier");
       _pushUndoNode(controller);
     });
     controller.mirrorDataChangedNotifier.addListener(() {
-      print("Mirror Changed");
+      log("----mirror change Notifier");
+
       _pushUndoNode(controller);
     });
   }
 
   void _onAspectRatioChanged() {
+    log("----AspectRatio Notifier");
     _pushUndoNode(
       _controller,
     );
+    Future.delayed(Duration(milliseconds: 500)).then((_) {
+      // _undoStack.removeLast();
+      _updateUndoRedoNotifier();
+      _makeItCenter();
+    });
   }
 
   void _onControllerChanged() {
@@ -217,6 +231,7 @@ class DefaultCupertinoCroppableImageControllerState
 
     // 🔥 Gesture JUST finished (rotate / zoom / drag / flip)
     if (_wasTransforming && !isTransforming) {
+      log("----General Notifier");
       _pushUndoNode(_controller);
     }
 
@@ -251,7 +266,7 @@ class DefaultCupertinoCroppableImageControllerState
       ),
     );
 
-    _redoStack.clear();
+    // _redoStack.clear();
 
     _updateUndoRedoNotifier();
   }
@@ -267,11 +282,12 @@ class DefaultCupertinoCroppableImageControllerState
     _currentShape = previous.shape;
 
     _controller?.dispose();
-
+    bool isLastUndo = _undoStack.length == 1;
+    log("bobby  ${isLastUndo}  ${_redoStack.length}");
     _controller = CupertinoCroppableImageController(
       vsync: this,
       imageProvider: widget.imageProvider,
-      data: previous.data.copyWith(),
+      data: isLastUndo ? widget.initialData!.copyWith() : previous.data.copyWith(),
       cropShapeFn: previous.data.cropShape.type == CropShapeType.ellipse
           ? circleCropShapeFn
           : aabbCropShapeFn,
@@ -283,18 +299,31 @@ class DefaultCupertinoCroppableImageControllerState
     _restoreFromUndoNode(previous);
     initialiseListener(_controller!);
     _updateUndoRedoNotifier();
+    if (isLastUndo) {
+      Future.delayed(Duration(milliseconds: 300)).then((_) {
+        callDefault();
+      });
+    }
     setState(() {});
   }
 
-  resetDateWithInitializecontroller() {
+  resetDateWithInitializecontroller({bool isUndoReset = false}) {
+    _undoStack.clear();
+    _redoStack.clear();
+
     prepareController(
-        type: _resetData?.cropShape.type,
-        initialDatas: _resetData.copyWith(),
-        isFreeCrop: true,
-        fromCrop: true);
+      initialDatas: widget.initialData,
+      type: widget.initialData?.cropShape.type,
+      isReset: true,
+    ).then((val) {
+      Future.delayed(Duration(milliseconds: 300)).then((_) {
+        callDefault();
+      });
+    });
   }
 
   void redo() {
+    log("redo  ${_redoStack.length}");
     if (_redoStack.isEmpty) return;
 
     final next = _redoStack.removeLast();
@@ -332,6 +361,7 @@ class DefaultCupertinoCroppableImageControllerState
 
   @override
   Widget build(BuildContext context) {
+    log("----dddd ${_undoStack.length}");
     if (_controller == null) {
       return const SizedBox.shrink();
     }
@@ -341,22 +371,27 @@ class DefaultCupertinoCroppableImageControllerState
 
   void defaultSetter(CupertinoCroppableImageController? val) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _resetData = val!.data.copyWith();
-      if (widget.fixedAspect != null) {
-        Future.delayed(const Duration(milliseconds: 200)).then((_) {
-          // applyAspectRatioCentered(snapped);
-          final snapped = snapFromAllowedAspectRatios(
-            widget.fixedAspect!,
-            widget.allowedAspectRatios ?? [],
-          );
-          changeAspectRatio(ratio: snapped);
-          Future.delayed(const Duration(milliseconds: 200)).then((_) {
-            _undoStack.removeLast();
-            _makeItCenter();
-          });
-        });
-      }
-      setState(() {});
+      callDefault();
     });
+  }
+
+  callDefault() {
+    if (widget.fixedAspect != null) {
+      Future.delayed(const Duration(milliseconds: 200)).then((_) {
+        // applyAspectRatioCentered(snapped);
+        // applyAspectRatioCentered(snapped);
+        final snapped = snapFromAllowedAspectRatios(
+          widget.fixedAspect!,
+          widget.allowedAspectRatios ?? [],
+        );
+        (_controller as AspectRatioMixin).currentAspectRatio = CropAspectRatio(width: 3, height: 4);
+        Future.delayed(const Duration(milliseconds: 200)).then((_) {
+          _undoStack.removeLast();
+          _updateUndoRedoNotifier();
+          _makeItCenter();
+        });
+      });
+    }
+    setState(() {});
   }
 }
