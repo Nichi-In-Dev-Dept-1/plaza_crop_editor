@@ -46,11 +46,13 @@ class DefaultCupertinoCroppableImageControllerState
   @override
   void initState() {
     super.initState();
-    if(widget.croppyStyleModel!=null){
-      if(widget.croppyStyleModel!.onImageFirstLoadingStarted!=null){
-        widget.croppyStyleModel!.onImageFirstLoadingStarted!();
+    WidgetsBinding.instance.addPostFrameCallback((_){
+      if(widget.croppyStyleModel!=null){
+        if(widget.croppyStyleModel!.onImageFirstLoadingStarted!=null){
+          widget.croppyStyleModel!.onImageFirstLoadingStarted!();
+        }
       }
-    }
+    });
     prepareController(type: widget.initialData?.cropShape.type, initialDatas: widget.initialData)
         .then((val) {
       defaultSetter(val);
