@@ -43,8 +43,6 @@ class DefaultCupertinoCroppableImageControllerState
   bool _wasTransforming = false;
   final ValueNotifier<UndoRedoState> undoRedoNotifier =
       ValueNotifier(const UndoRedoState(canUndo: false, canRedo: false));
-  CropShapeType _currentShape = CropShapeType.aabb;
-  double _lastUiRotationDeg = 0.0;
 
   @override
   void initState() {
@@ -72,6 +70,30 @@ class DefaultCupertinoCroppableImageControllerState
       _updateUndoRedoNotifier();
     });
   }
+  CropAspectRatio aspectRatioFromDouble(
+      double aspect, {
+        int base = 1000,
+      }) {
+    // aspect = width / height
+    return CropAspectRatio(
+      width: (aspect * base).round(),
+      height: base,
+    );
+  }
+  CropAspectRatio snapProStyle(double fixedAspect) {
+    // square check
+    if ((fixedAspect - 1.0).abs() < 0.01) {
+      return const CropAspectRatio(width: 1, height: 1);
+    }
+
+    // landscape
+    if (fixedAspect > 1.0) {
+      return const CropAspectRatio(width: 16, height: 9);
+    }
+
+    // portrait
+    return const CropAspectRatio(width: 9, height: 16);
+  }
 
   CropAspectRatio? snapFromAllowedAspectRatios(
     double fixedAspect,
@@ -85,8 +107,8 @@ class DefaultCupertinoCroppableImageControllerState
 
       final value = ratio.width / ratio.height;
       final diff = (fixedAspect - value).abs();
-
-      if (diff < minDiff) {
+      log("vvvvvvvvvvv  ${ratio} value -> ${value} diff-> ${diff} minDiff-> ${minDiff}  fixedAspect-> ${fixedAspect}");
+      if (diff > minDiff) {
         minDiff = diff;
         closest = ratio;
       }
@@ -177,6 +199,7 @@ class DefaultCupertinoCroppableImageControllerState
   applyFreeCrop(CropAspectRatio? ratio) {
     Future.delayed(const Duration(milliseconds: 200)).then((_) {
       (_controller as AspectRatioMixin).currentAspectRatio = _controller?.allowedAspectRatios.first;
+      (_controller as AspectRatioMixin).currentAspectRatio = null;
     });
   }
 
@@ -286,15 +309,13 @@ class DefaultCupertinoCroppableImageControllerState
 
     final previous = _undoStack.last;
 
-    _currentShape = previous.shape;
-
     _controller?.dispose();
     bool isLastUndo = _undoStack.length == 1;
     log("bobby  ${isLastUndo}  ${_redoStack.length}");
     _controller = CupertinoCroppableImageController(
       vsync: this,
       imageProvider: widget.imageProvider,
-      data:  previous.data.copyWith(),
+      data: previous.data.copyWith(),
       cropShapeFn: previous.data.cropShape.type == CropShapeType.ellipse
           ? circleCropShapeFn
           : aabbCropShapeFn,
@@ -315,7 +336,6 @@ class DefaultCupertinoCroppableImageControllerState
   }
 
   resetDateWithInitializecontroller({bool isUndoReset = false}) {
-
     _undoStack.clear();
     _redoStack.clear();
 
@@ -336,8 +356,6 @@ class DefaultCupertinoCroppableImageControllerState
 
     final next = _redoStack.removeLast();
     _undoStack.add(next);
-
-    _currentShape = next.shape;
 
     resetListener();
 
@@ -383,18 +401,17 @@ class DefaultCupertinoCroppableImageControllerState
     });
   }
 
-  callDefault({bool isFirstTime=false}) {
-
+  callDefault({bool isFirstTime = false}) {
     if (widget.fixedAspect != null) {
-      Future.delayed( Duration(milliseconds:isFirstTime?600: 200)).then((_) {
+      Future.delayed(Duration(milliseconds: isFirstTime ? 600 : 200)).then((_) {
         // applyAspectRatioCentered(snapped);
         // applyAspectRatioCentered(snapped);
-        final snapped = snapFromAllowedAspectRatios(
+        final snapped = aspectRatioFromDouble(
           widget.fixedAspect!,
-          widget.allowedAspectRatios ?? [],
         );
+        log("sdfsdfsd ${snapped}  ${widget.fixedAspect}");
         (_controller as AspectRatioMixin).currentAspectRatio = snapped;
-        Future.delayed( Duration(milliseconds:isFirstTime?600: 200)).then((_) {
+        Future.delayed(Duration(milliseconds: isFirstTime ? 600 : 200)).then((_) {
           _undoStack.removeLast();
           _updateUndoRedoNotifier();
           _makeItCenter();
