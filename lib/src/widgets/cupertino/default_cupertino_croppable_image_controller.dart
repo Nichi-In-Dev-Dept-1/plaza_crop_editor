@@ -1,6 +1,4 @@
 import 'dart:developer';
-import 'dart:math' as math;
-
 import 'package:croppy/src/src.dart';
 import 'package:flutter/material.dart';
 
@@ -43,6 +41,7 @@ class DefaultCupertinoCroppableImageControllerState
   bool _wasTransforming = false;
   final ValueNotifier<UndoRedoState> undoRedoNotifier =
       ValueNotifier(const UndoRedoState(canUndo: false, canRedo: false));
+  CroppableImageData? resetData;
 
   @override
   void initState() {
@@ -67,54 +66,22 @@ class DefaultCupertinoCroppableImageControllerState
     Future.delayed(const Duration(milliseconds: 500)).then((_) {
       _undoStack.removeLast();
       _pushUndoNode(_controller);
+      if (resetData == null) {
+        resetData = _controller?.data;
+      }
       _updateUndoRedoNotifier();
     });
   }
+
   CropAspectRatio aspectRatioFromDouble(
-      double aspect, {
-        int base = 1000,
-      }) {
+    double aspect, {
+    int base = 1000,
+  }) {
     // aspect = width / height
     return CropAspectRatio(
       width: (aspect * base).round(),
       height: base,
     );
-  }
-  CropAspectRatio snapProStyle(double fixedAspect) {
-    // square check
-    if ((fixedAspect - 1.0).abs() < 0.01) {
-      return const CropAspectRatio(width: 1, height: 1);
-    }
-
-    // landscape
-    if (fixedAspect > 1.0) {
-      return const CropAspectRatio(width: 16, height: 9);
-    }
-
-    // portrait
-    return const CropAspectRatio(width: 9, height: 16);
-  }
-
-  CropAspectRatio? snapFromAllowedAspectRatios(
-    double fixedAspect,
-    List<CropAspectRatio?> allowedAspectRatios,
-  ) {
-    CropAspectRatio? closest;
-    double minDiff = double.infinity;
-
-    for (final ratio in allowedAspectRatios) {
-      if (ratio == null) continue; // skip free crop
-
-      final value = ratio.width / ratio.height;
-      final diff = (fixedAspect - value).abs();
-      log("vvvvvvvvvvv  ${ratio} value -> ${value} diff-> ${diff} minDiff-> ${minDiff}  fixedAspect-> ${fixedAspect}");
-      if (diff > minDiff) {
-        minDiff = diff;
-        closest = ratio;
-      }
-    }
-
-    return closest;
   }
 
   Future<CupertinoCroppableImageController?> prepareController(
@@ -198,8 +165,8 @@ class DefaultCupertinoCroppableImageControllerState
 
   applyFreeCrop(CropAspectRatio? ratio) {
     Future.delayed(const Duration(milliseconds: 200)).then((_) {
-      (_controller as AspectRatioMixin).currentAspectRatio = _controller?.allowedAspectRatios.first;
       (_controller as AspectRatioMixin).currentAspectRatio = null;
+      // (_controller as AspectRatioMixin).currentAspectRatio = ;
     });
   }
 
@@ -233,9 +200,9 @@ class DefaultCupertinoCroppableImageControllerState
     controller.dataChangedNotifier.addListener(() {
       log("----data change Notifier");
       _pushUndoNode(controller);
-      Future.delayed(Duration(milliseconds: 300)).then((_) {
-        _makeItCenter();
-      });
+      // Future.delayed(Duration(milliseconds: 300)).then((_) {
+      //   _makeItCenter();
+      // });
     });
     controller.mirrorDataChangedNotifier.addListener(() {
       log("----mirror change Notifier");
@@ -248,7 +215,7 @@ class DefaultCupertinoCroppableImageControllerState
     Future.delayed(Duration(milliseconds: 300)).then((_) {
       // _undoStack.removeLast();
       _pushUndoNode(_controller);
-      _makeItCenter();
+      // _makeItCenter();
     });
   }
 
@@ -310,8 +277,7 @@ class DefaultCupertinoCroppableImageControllerState
     final previous = _undoStack.last;
 
     _controller?.dispose();
-    bool isLastUndo = _undoStack.length == 1;
-    log("bobby  ${isLastUndo}  ${_redoStack.length}");
+
     _controller = CupertinoCroppableImageController(
       vsync: this,
       imageProvider: widget.imageProvider,
@@ -340,7 +306,7 @@ class DefaultCupertinoCroppableImageControllerState
     _redoStack.clear();
 
     prepareController(
-      initialDatas: widget.initialData,
+      initialDatas: resetData,
       type: widget.initialData?.cropShape.type,
       isReset: true,
     ).then((val) {
@@ -409,7 +375,7 @@ class DefaultCupertinoCroppableImageControllerState
         final snapped = aspectRatioFromDouble(
           widget.fixedAspect!,
         );
-        log("sdfsdfsd ${snapped}  ${widget.fixedAspect}");
+
         (_controller as AspectRatioMixin).currentAspectRatio = snapped;
         Future.delayed(Duration(milliseconds: isFirstTime ? 600 : 200)).then((_) {
           _undoStack.removeLast();
