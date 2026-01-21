@@ -12,13 +12,13 @@ class DefaultCupertinoCroppableImageController extends StatefulWidget {
     this.postProcessFn,
     this.cropShapeFn,
     this.enabledTransformations,
-    this.fixedAspect,
+    this.fixedAspect, this.croppyStyleModel,
   });
 
   final ImageProvider imageProvider;
   final CroppableImageData? initialData;
   final double? fixedAspect;
-
+  final CroppyStyleModel? croppyStyleModel;
   final CroppableImagePostProcessFn? postProcessFn;
   final CropShapeFn? cropShapeFn;
   final List<CropAspectRatio?>? allowedAspectRatios;
@@ -46,6 +46,11 @@ class DefaultCupertinoCroppableImageControllerState
   @override
   void initState() {
     super.initState();
+    if(widget.croppyStyleModel!=null){
+      if(widget.croppyStyleModel!.onImageFirstLoadingStarted!=null){
+        widget.croppyStyleModel!.onImageFirstLoadingStarted!();
+      }
+    }
     prepareController(type: widget.initialData?.cropShape.type, initialDatas: widget.initialData)
         .then((val) {
       defaultSetter(val);
@@ -58,17 +63,20 @@ class DefaultCupertinoCroppableImageControllerState
     );
   }
 
-  void _makeItCenter() {
+  void _makeItCenter({bool isFirstTime = false}) {
     var currentRect = _controller?.getCenterRect();
     _controller?.onBaseTransformation(
       _controller!.data.copyWith(cropRect: currentRect),
     );
     Future.delayed(const Duration(milliseconds: 500)).then((_) {
+     if(isFirstTime){
+       if(widget.croppyStyleModel!.onImageFirstLoadingEnded!=null){
+         widget.croppyStyleModel!.onImageFirstLoadingEnded!();
+       }
+     }
       _undoStack.removeLast();
       _pushUndoNode(_controller);
-      if (resetData == null) {
-        resetData = _controller?.data;
-      }
+     resetData ??= _controller?.data;
       _updateUndoRedoNotifier();
     });
   }
@@ -353,7 +361,7 @@ class DefaultCupertinoCroppableImageControllerState
 
   @override
   Widget build(BuildContext context) {
-    log("----undolength ${_undoStack.length}");
+
     if (_controller == null) {
       return const SizedBox.shrink();
     }
@@ -380,7 +388,7 @@ class DefaultCupertinoCroppableImageControllerState
         Future.delayed(Duration(milliseconds: isFirstTime ? 600 : 200)).then((_) {
           _undoStack.removeLast();
           _updateUndoRedoNotifier();
-          _makeItCenter();
+          _makeItCenter(isFirstTime: isFirstTime);
         });
       });
     }

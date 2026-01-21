@@ -45,9 +45,11 @@ Future<CropImageResult?> showCupertinoImageCropper(
         cropShapeFn: tempCrop,
         allowedAspectRatios: allowedAspectRatios,
         enabledTransformations: enabledTransformations,
+        croppyStyleModel: croppyStyleModel,
         builder: (context, controller, state) => CupertinoImageCropperPage(
           checkKey: state,
           heroTag: heroTag,
+
           croppyStyleModel: croppyStyleModel,
           showLoadingIndicatorOnSubmit: showLoadingIndicatorOnSubmit,
           controller: controller,

@@ -10,6 +10,8 @@ class CroppyStyleModel {
   final Widget? resetIcon;
   final TextStyle? titleTextStyle;
   final String? titleText;
+  final VoidCallback? onImageFirstLoadingStarted;
+  final VoidCallback? onImageFirstLoadingEnded;
   final Widget? Function(CroppableImageController, DefaultCupertinoCroppableImageControllerState)?
       bottomNavigationBar;
   final PreferredSizeWidget? Function(
@@ -25,6 +27,8 @@ class CroppyStyleModel {
     this.bottomNavigationBar,
     this.appbar,
     this.bottomIconColor,
+    this.onImageFirstLoadingStarted,
+    this.onImageFirstLoadingEnded,
   });
 }
 
