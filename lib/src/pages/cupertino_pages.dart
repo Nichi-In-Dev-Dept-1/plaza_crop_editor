@@ -63,7 +63,7 @@ Future<CropImageResult?> showCupertinoImageCropper(
 
   if (context.mounted) {
     return Navigator.of(context).push<CropImageResult?>(
-      CupertinoPageRoute(builder: builder),
+      MaterialPageRoute(builder:builder),
     );
   }
 
